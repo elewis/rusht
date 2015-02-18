@@ -1,6 +1,5 @@
 #![feature(io)]
-
-use std::string::String;
+#![feature(collections)]
 
 use shell::Shell;
 
