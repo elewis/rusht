@@ -52,6 +52,8 @@ pub mod shell {
                         cmd::CommandResult::Exit => break,
                         _ => {}
                     }
+                } else {
+                    println!("{}: command is not a builtin", toks[0]);
                 }
             }
             println!("Goodbye");
@@ -90,12 +92,7 @@ pub mod shell {
 pub mod parse {
 
     pub fn tokenize(line : &str) -> Vec<&str> {
-        let tokens: Vec<&str> = line.split(' ').filter(|s| !s.is_empty()).collect();
-
-        for token in tokens.iter() {
-            println!("   - {}\\", token);
-        }
-        tokens
+        line.split(' ').filter(|s| !s.is_empty()).collect()
     }
 
 }
