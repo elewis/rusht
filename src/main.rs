@@ -38,6 +38,7 @@ pub mod shell {
                 prompt: String::from_str("rusht$ "),
                 builtins: vec![
                     Builtin { name: "quit", desc: "quit the shell", func: cmd_quit },
+                    Builtin { name: "help", desc: "print a help message", func: cmd_help },
                 ]
             }
         }
@@ -75,6 +76,13 @@ pub mod shell {
 
     fn cmd_quit(args: Vec<&str>) -> CommandResult {
         CommandResult::Exit
+    }
+
+    fn cmd_help(args: Vec<&str>) -> CommandResult {
+        println!("Rust Shell (Rus[h]t) version '{}'", env!("CARGO_PKG_VERSION"));
+        println!("");
+        println!("Enter 'help' to view this message");
+        CommandResult::Success(0)
     }
 }
 
