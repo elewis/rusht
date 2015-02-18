@@ -18,13 +18,7 @@ pub mod shell {
     struct Builtin {
         name: &'static str,
         desc: &'static str,
-        func: fn(Vec<&str>) -> CommandResult
-    }
-
-    enum CommandResult {
-        Success(isize),
-        Failure(isize),
-        Exit
+        func: fn(Vec<&str>) -> cmd::CommandResult
     }
 
     pub struct Shell {
@@ -37,8 +31,8 @@ pub mod shell {
             Shell {
                 prompt: String::from_str("rusht$ "),
                 builtins: vec![
-                    Builtin { name: "quit", desc: "quit the shell", func: cmd_quit },
-                    Builtin { name: "help", desc: "print a help message", func: cmd_help },
+                    Builtin { name: "quit", desc: "quit the shell", func: cmd::quit },
+                    Builtin { name: "help", desc: "print a help message", func: cmd::help },
                 ]
             }
         }
@@ -56,7 +50,7 @@ pub mod shell {
 
                 if comm.is_some() {
                     match ((*comm.unwrap()).func)(toks) {
-                        CommandResult::Exit => break,
+                        cmd::CommandResult::Exit => break,
                         _ => {}
                     }
                 }
@@ -74,15 +68,23 @@ pub mod shell {
         }
     }
 
-    fn cmd_quit(args: Vec<&str>) -> CommandResult {
-        CommandResult::Exit
-    }
+    mod cmd {
+        pub enum CommandResult {
+            Success(isize),
+            Failure(isize),
+            Exit
+        }
 
-    fn cmd_help(args: Vec<&str>) -> CommandResult {
-        println!("Rust Shell (Rus[h]t) version '{}'", env!("CARGO_PKG_VERSION"));
-        println!("");
-        println!("Enter 'help' to view this message");
-        CommandResult::Success(0)
+        pub fn quit(args: Vec<&str>) -> CommandResult {
+            CommandResult::Exit
+        }
+
+        pub fn help(args: Vec<&str>) -> CommandResult {
+            println!("Rust Shell (Rus[h]t) version '{}'", env!("CARGO_PKG_VERSION"));
+            println!("");
+            println!("Enter 'help' to view this message");
+            CommandResult::Success(0)
+        }
     }
 }
 
