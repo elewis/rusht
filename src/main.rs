@@ -44,6 +44,8 @@ pub mod shell {
 
         pub fn run(&mut self) {
             let mut stdin = old_io::stdin();
+
+            cmd_help(vec![]);
             loop {
                 print!("{}", self.prompt);
                 let line = match stdin.read_line() {
@@ -89,7 +91,6 @@ pub mod shell {
 
     fn cmd_help(args: Vec<&str>) -> CommandResult {
         println!("Rust Shell (Rus[h]t) version '{}'", env!("CARGO_PKG_VERSION"));
-        println!("");
         println!("Enter 'help' to view this message");
         CommandResult::Success(0)
     }
