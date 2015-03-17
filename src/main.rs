@@ -57,7 +57,8 @@ pub mod shell {
                     Err(msg) => panic!("{}: failed to read line", msg)
                 };
 
-                let mut args = parse::tokenize(&line.trim());
+                let expanded = self.expand_shortcuts(&line.trim());
+                let mut args = parse::tokenize(&expanded);
                 let cmnd = args.remove(0);
                 let builtin = self.lookup(cmnd);
 
@@ -86,6 +87,25 @@ pub mod shell {
                 }
             }
             None
+        }
+
+        fn expand_shortcuts(&self, line: &str) -> String {
+            let test_home = os::getenv("HOME");
+
+            if test_home.is_none() {
+                return String::from_str(line);
+            }
+
+            let home = test_home.unwrap();
+            let mut out = String::new();
+            for c in line.chars() {
+                if c == '~' {
+                    out.push_str(&home);
+                } else {
+                    out.push(c);
+                }
+            }
+            out
         }
     }
 
