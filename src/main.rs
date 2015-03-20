@@ -116,8 +116,11 @@ pub mod shell {
     }
 
     fn cmd_cd(args: Vec<&str>) -> CommandResult {
-        let new_cwd = path::Path::new(args[0]);
-        match env::set_current_dir(new_cwd) {
+        let dir = match args.len() {
+            0 => env::home_dir().unwrap().into_os_string().into_string().unwrap(),
+            _ => String::from_str(args[0])
+        };
+        match env::set_current_dir(path::Path::new(&dir)) {
             Ok(_) => {
                 CommandResult::Success(0)
             },
