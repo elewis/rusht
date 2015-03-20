@@ -1,5 +1,4 @@
-#![feature(io)]
-#![feature(process)]
+#![feature(collections)]
 
 use shell::Shell;
 
@@ -8,11 +7,11 @@ fn main() {
 }
 
 pub mod shell {
-    use std::os;
-    use std::old_io;
+    use std::env;
+    use std::io;
     use std::process;
     use std::vec::Vec;
-    use std::old_path;
+    use std::path;
 
     use parse;
 
@@ -47,14 +46,15 @@ pub mod shell {
         }
 
         pub fn run(&mut self) {
-            let mut stdin = old_io::stdin();
+            let mut stdin = io::stdin();
 
             cmd_help(vec![]);
             loop {
                 print!("{}", self.prompt);
-                let line = match stdin.read_line() {
-                    Ok(line) => line,
-                    Err(msg) => panic!("{}: failed to read line", msg)
+                let mut line = String::new();
+                match stdin.read_line(&mut line) {
+                    Err(msg) => panic!("{}: failed to read line", msg),
+                    _ => {}
                 };
 
                 let expanded = self.expand_shortcuts(&line.trim());
@@ -90,13 +90,14 @@ pub mod shell {
         }
 
         fn expand_shortcuts(&self, line: &str) -> String {
-            let test_home = os::getenv("HOME");
+            let test_home = env::var_os("HOME");
 
             if test_home.is_none() {
                 return String::from_str(line);
             }
 
-            let home = test_home.unwrap();
+            let home_os = test_home.unwrap();
+            let home = home_os.to_str().unwrap();
             let mut out = String::new();
             for c in line.chars() {
                 if c == '~' {
@@ -110,8 +111,8 @@ pub mod shell {
     }
 
     fn cmd_cd(args: Vec<&str>) -> CommandResult {
-        let new_cwd = old_path::Path::new(args[0]);
-        match os::change_dir(&new_cwd) {
+        let new_cwd = path::Path::new(args[0]);
+        match env::set_current_dir(new_cwd) {
             Ok(_) => {
                 CommandResult::Success(0)
             },
@@ -122,8 +123,8 @@ pub mod shell {
         }
     }
 
-    fn cmd_pwd(args: Vec<&str>) -> CommandResult {
-        match os::getcwd() {
+    fn cmd_pwd(_: Vec<&str>) -> CommandResult {
+        match env::current_dir() {
             Ok(path) => {
                 println!("{}", path.display());
                 CommandResult::Success(0)
@@ -135,11 +136,11 @@ pub mod shell {
         }
     }
 
-    fn cmd_quit(args: Vec<&str>) -> CommandResult {
+    fn cmd_quit(_: Vec<&str>) -> CommandResult {
         CommandResult::Exit
     }
 
-    fn cmd_help(args: Vec<&str>) -> CommandResult {
+    fn cmd_help(_: Vec<&str>) -> CommandResult {
         println!("Rust Shell (Rus[h]t) version '{}'", env!("CARGO_PKG_VERSION"));
         println!("Enter 'help' to view this message");
         CommandResult::Success(0)
