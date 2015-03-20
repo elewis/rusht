@@ -8,7 +8,7 @@ fn main() {
 
 pub mod shell {
     use std::env;
-    use std::io;
+    use std::io::{self, Write};
     use std::process;
     use std::vec::Vec;
     use std::path;
@@ -47,10 +47,12 @@ pub mod shell {
 
         pub fn run(&mut self) {
             let mut stdin = io::stdin();
+            let mut stdout = io::stdout();
 
             cmd_help(vec![]);
             loop {
                 print!("{}", self.prompt);
+                let _ = stdout.flush();
                 let mut line = String::new();
                 match stdin.read_line(&mut line) {
                     Err(msg) => panic!("{}: failed to read line", msg),
@@ -59,6 +61,9 @@ pub mod shell {
 
                 let expanded = self.expand_shortcuts(&line.trim());
                 let mut args = parse::tokenize(&expanded);
+                if args.len() == 0 {
+                    continue;
+                }
                 let cmnd = args.remove(0);
                 let builtin = self.lookup(cmnd);
 
