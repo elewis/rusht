@@ -1,4 +1,3 @@
-#![feature(collections)]
 
 use shell::Shell;
 
@@ -28,14 +27,18 @@ pub mod shell {
     }
 
     pub struct Shell {
-        prompt: String,
+        stdin:  io::Stdin,
+        stdout: io::Stdout,
+        stderr: io::Stderr,
         builtins: Vec<Builtin>,
     }
 
     impl Shell {
         pub fn new() -> Self {
             Shell {
-                prompt: String::from_str("rusht$ "),
+                stdin:  io::stdin(),
+                stdout: io::stdout(),
+                stderr: io::stderr(),
                 builtins: vec![
                     Builtin { name: "quit", desc: "quit the shell",           func: cmd_quit },
                     Builtin { name: "help", desc: "print a help message",     func: cmd_help },
@@ -46,15 +49,12 @@ pub mod shell {
         }
 
         pub fn run(&mut self) {
-            let mut stdin = io::stdin();
-            let mut stdout = io::stdout();
-
             cmd_help(vec![]);
             loop {
-                print!("{}", self.prompt);
-                let _ = stdout.flush();
+                self.prompt();
+
                 let mut line = String::new();
-                match stdin.read_line(&mut line) {
+                match self.stdin.read_line(&mut line) {
                     Err(msg) => panic!("{}: failed to read line", msg),
                     _ => {}
                 };
@@ -85,6 +85,11 @@ pub mod shell {
             println!("Goodbye");
         }
 
+        fn prompt(&mut self) {
+            print!("{}$ ", "rusht");
+            let _ = self.stdout.flush();
+        }
+
         fn lookup(&self, name: &str) -> Option<&Builtin> {
             for b in self.builtins.iter() {
                 if (*b).name == name {
@@ -98,7 +103,7 @@ pub mod shell {
             let test_home = env::var_os("HOME");
 
             if test_home.is_none() {
-                return String::from_str(line);
+                return line.to_string();
             }
 
             let home_os = test_home.unwrap();
@@ -118,7 +123,7 @@ pub mod shell {
     fn cmd_cd(args: Vec<&str>) -> CommandResult {
         let dir = match args.len() {
             0 => env::home_dir().unwrap().into_os_string().into_string().unwrap(),
-            _ => String::from_str(args[0])
+            _ => args[0].to_string()
         };
         match env::set_current_dir(path::Path::new(&dir)) {
             Ok(_) => {
