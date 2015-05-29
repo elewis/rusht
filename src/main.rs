@@ -17,7 +17,7 @@ pub mod shell {
     struct Builtin {
         name: &'static str,
         desc: &'static str,
-        func: fn(Vec<&str>) -> CommandResult
+        func: fn(&Shell, Vec<&str>) -> CommandResult
     }
 
     enum CommandResult {
@@ -43,13 +43,14 @@ pub mod shell {
                     Builtin { name: "quit", desc: "quit the shell",           func: cmd_quit },
                     Builtin { name: "help", desc: "print a help message",     func: cmd_help },
                     Builtin { name: "pwd",  desc: "print working directory",  func: cmd_pwd },
-                    Builtin { name: "cd",   desc: "change working directory", func: cmd_cd }
+                    Builtin { name: "cd",   desc: "change working directory", func: cmd_cd },
+                    Builtin { name: "list", desc: "list shell builtins",      func: cmd_builtins }
                 ]
             }
         }
 
         pub fn run(&mut self) {
-            cmd_help(vec![]);
+            cmd_help(&self, vec![]);
             loop {
                 self.prompt();
 
@@ -68,7 +69,7 @@ pub mod shell {
                 let builtin = self.lookup(cmnd);
 
                 if builtin.is_some() {
-                    match ((*builtin.unwrap()).func)(args) {
+                    match ((*builtin.unwrap()).func)(&self, args) {
                         CommandResult::Exit => break,
                         _ => {}
                     }
@@ -120,7 +121,7 @@ pub mod shell {
         }
     }
 
-    fn cmd_cd(args: Vec<&str>) -> CommandResult {
+    fn cmd_cd(_: &Shell, args: Vec<&str>) -> CommandResult {
         let dir = match args.len() {
             0 => env::home_dir().unwrap().into_os_string().into_string().unwrap(),
             _ => args[0].to_string()
@@ -136,7 +137,7 @@ pub mod shell {
         }
     }
 
-    fn cmd_pwd(_: Vec<&str>) -> CommandResult {
+    fn cmd_pwd(_: &Shell, _: Vec<&str>) -> CommandResult {
         match env::current_dir() {
             Ok(path) => {
                 println!("{}", path.display());
@@ -149,13 +150,20 @@ pub mod shell {
         }
     }
 
-    fn cmd_quit(_: Vec<&str>) -> CommandResult {
+    fn cmd_quit(_: &Shell, _: Vec<&str>) -> CommandResult {
         CommandResult::Exit
     }
 
-    fn cmd_help(_: Vec<&str>) -> CommandResult {
-        println!("Rust Shell (Rus[h]t) version '{}'", env!("CARGO_PKG_VERSION"));
+    fn cmd_help(_: &Shell, _: Vec<&str>) -> CommandResult {
+        println!("Rust Shell (Rus[h]t) version {}", env!("CARGO_PKG_VERSION"));
         println!("Enter 'help' to view this message");
+        CommandResult::Success(0)
+    }
+
+    fn cmd_builtins(shell: &Shell, _: Vec<&str>) -> CommandResult {
+        for b in shell.builtins.iter() {
+            println!("- {}: {}", b.name, b.desc);
+        }
         CommandResult::Success(0)
     }
 }
