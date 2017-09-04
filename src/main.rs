@@ -1,4 +1,6 @@
 
+extern crate nix;
+
 use shell::Shell;
 
 fn main() {
@@ -13,6 +15,8 @@ pub mod shell {
     use std::path;
 
     use parse;
+
+    use nix::sys::signal;
 
     struct Builtin {
         name: &'static str,
@@ -49,7 +53,17 @@ pub mod shell {
         }
 
         pub fn run(&mut self) {
-            cmd_help(&self, vec![]);
+            let sig_ignore = signal::SigAction::new(signal::SigHandler::SigIgn,
+                                signal::SaFlags::empty(),
+                                signal::SigSet::empty());
+
+            unsafe {
+                // Ctrl+C
+                signal::sigaction(signal::SIGINT, &sig_ignore).expect("could not assign SIGINT handler");
+                // Ctrl+Z
+                signal::sigaction(signal::SIGTSTP, &sig_ignore).expect("could not assign SIGTSTP handler");
+            }
+
             loop {
                 self.prompt();
 
