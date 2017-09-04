@@ -40,11 +40,10 @@ pub mod shell {
                 stdout: io::stdout(),
                 stderr: io::stderr(),
                 builtins: vec![
-                    Builtin { name: "quit", desc: "quit the shell",           func: cmd_quit },
+                    Builtin { name: "cd",   desc: "change working directory", func: cmd_cd },
+                    Builtin { name: "exit", desc: "exit the shell",           func: cmd_exit },
                     Builtin { name: "help", desc: "print a help message",     func: cmd_help },
                     Builtin { name: "pwd",  desc: "print working directory",  func: cmd_pwd },
-                    Builtin { name: "cd",   desc: "change working directory", func: cmd_cd },
-                    Builtin { name: "list", desc: "list shell builtins",      func: cmd_builtins }
                 ]
             }
         }
@@ -87,7 +86,9 @@ pub mod shell {
         }
 
         fn prompt(&mut self) {
-            print!("{}$ ", "rusht");
+            let dir = env::current_dir().expect("unable to fetch current directory");
+
+            print!("rusht:{dir}$ ", dir=dir.display());
             let _ = self.stdout.flush();
         }
 
@@ -150,29 +151,28 @@ pub mod shell {
         }
     }
 
-    fn cmd_quit(_: &Shell, _: Vec<&str>) -> CommandResult {
+    fn cmd_exit(_: &Shell, _: Vec<&str>) -> CommandResult {
         CommandResult::Exit
     }
 
-    fn cmd_help(_: &Shell, _: Vec<&str>) -> CommandResult {
-        println!("Rust Shell (Rus[h]t) version {}", env!("CARGO_PKG_VERSION"));
+    fn cmd_help(shell: &Shell, _: Vec<&str>) -> CommandResult {
+        println!("Rust Shell (Rus[h]t) version {version}", version=env!("CARGO_PKG_VERSION"));
         println!("Enter 'help' to view this message");
-        CommandResult::Success(0)
-    }
-
-    fn cmd_builtins(shell: &Shell, _: Vec<&str>) -> CommandResult {
+        println!("");
+        println!("These shell commands are defined internally:");
         for b in shell.builtins.iter() {
-            println!("- {}: {}", b.name, b.desc);
+            println!("{command:<width$} - {description}", command=b.name, description=b.desc, width=20);
         }
         CommandResult::Success(0)
     }
+
 }
 
 pub mod parse {
 
     pub fn tokenize(line : &str) -> Vec<&str> {
         if line.len() > 0 {
-            line.split(' ').filter(|s| !s.is_empty()).collect()
+            line.split_whitespace().filter(|s| !s.is_empty()).collect()
         } else {
             vec![]
         }
